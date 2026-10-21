@@ -106,18 +106,26 @@ export function scoreSymptoms(symptomsText) {
 
   // Sort descending by confidence and score
   scoredFaults.sort((a, b) => b.score - a.score);
-  const top3 = scoredFaults.slice(0, 3);
+  
+  // Only include matches that have an actual score > 0 and matched reasons
+  const topScore = scoredFaults[0] ? scoredFaults[0].score : 0;
+  const topReasons = scoredFaults[0] ? scoredFaults[0].why_matched : [];
+  const hasRealMatch = topScore > 0 && topReasons.length > 0;
+
+  const top3 = hasRealMatch
+    ? scoredFaults.filter(f => f.score > 0 && f.why_matched.length > 0).slice(0, 3)
+    : [];
 
   const topConfidence = top3[0] ? top3[0].confidence : 0;
-  const humanReviewRequired = topConfidence < 0.5;
+  const humanReviewRequired = !hasRealMatch || topConfidence < 0.5;
   const humanReviewNote = humanReviewRequired
     ? 'Notice: Low confidence diagnosis (below 50%). Please verify these suggestions manually or check physical connections.'
     : null;
 
   // Speakable response generation
   let speakableSummary = '';
-  if (top3.length === 0 || topConfidence === 0) {
-    speakableSummary = 'I could not find a matching network issue. Please check physical cables or describe additional symptoms.';
+  if (top3.length === 0 || !hasRealMatch) {
+    speakableSummary = 'I could not find a matching network issue. Please check physical cables, try the "no internet" checklist, or describe more symptoms.';
   } else if (humanReviewRequired) {
     speakableSummary = `With low confidence, this sounds like ${top3[0].name}. Confidence is under 50 percent, so please verify manually. First step: ${top3[0].immediate_fix}`;
   } else {

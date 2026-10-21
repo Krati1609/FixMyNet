@@ -306,39 +306,55 @@ export default function App() {
 
                     <div className="assistant-text">{m.text}</div>
 
-                    {/* Rich Diagnosis Details Card */}
-                    {m.mcpData && m.tool === 'diagnose_issue' && m.mcpData.top_matches && m.mcpData.top_matches.length > 0 && (
-                      <div className="diagnosis-card">
-                        <div className="diagnosis-header">
-                          <span className="fault-name">{m.mcpData.top_matches[0].name}</span>
-                          <span className={`confidence-badge ${m.mcpData.top_matches[0].confidence >= 0.5 ? 'confidence-high' : 'confidence-low'}`}>
-                            {Math.round(m.mcpData.top_matches[0].confidence * 100)}% Confidence
-                          </span>
-                        </div>
+                    {/* Diagnosis Result: Only show fault card if there is a real match with why_matched reasons */}
+                    {m.mcpData && m.tool === 'diagnose_issue' && (
+                      <>
+                        {/* Case 1: Real match with non-empty why_matched reasons */}
+                        {m.mcpData.top_matches &&
+                         m.mcpData.top_matches.length > 0 &&
+                         m.mcpData.top_matches[0].why_matched &&
+                         m.mcpData.top_matches[0].why_matched.length > 0 ? (
+                          <div className="diagnosis-card">
+                            <div className="diagnosis-header">
+                              <span className="fault-name">{m.mcpData.top_matches[0].name}</span>
+                              <span className={`confidence-badge ${m.mcpData.top_matches[0].confidence >= 0.5 ? 'confidence-high' : 'confidence-low'}`}>
+                                {Math.round(m.mcpData.top_matches[0].confidence * 100)}% Confidence
+                              </span>
+                            </div>
 
-                        {/* Low Confidence Human Review Notice */}
-                        {m.mcpData.human_review_required && (
-                          <div className="human-review-alert">
-                            <AlertTriangle size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} />
-                            <strong>Manual Review Required:</strong> {m.mcpData.human_review_note}
+                            {/* Low Confidence Human Review Notice */}
+                            {m.mcpData.human_review_required && (
+                              <div className="human-review-alert">
+                                <AlertTriangle size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} />
+                                <strong>Manual Review Required:</strong> {m.mcpData.human_review_note}
+                              </div>
+                            )}
+
+                            <div style={{ fontSize: '13px', color: '#475569', marginTop: '6px' }}>
+                              <strong>Category:</strong> {m.mcpData.top_matches[0].category} &bull; <strong>Severity:</strong> {m.mcpData.top_matches[0].severity}
+                            </div>
+
+                            <div style={{ fontSize: '13px', color: '#475569', marginTop: '4px' }}>
+                              <strong>Immediate Action:</strong> {m.mcpData.top_matches[0].immediate_fix}
+                            </div>
+
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
+                              <strong>Why matched:</strong> {m.mcpData.top_matches[0].why_matched.join(', ')}
+                            </div>
                           </div>
+                        ) : (
+                          /* Case 2: No real match or empty why_matched - Show NO fault card, only human review warning & suggestion */
+                          m.mcpData.human_review_required && (
+                            <div className="human-review-alert" style={{ marginTop: '10px' }}>
+                              <AlertTriangle size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px' }} />
+                              <strong>Manual Review Required:</strong> {m.mcpData.human_review_note}
+                              <div style={{ marginTop: '6px', fontSize: '13px', color: '#92400e' }}>
+                                Suggestion: Try asking for the <strong>"no internet" checklist</strong> or describe more symptoms (e.g. error codes, ping results, or cable status).
+                              </div>
+                            </div>
+                          )
                         )}
-
-                        <div style={{ fontSize: '13px', color: '#475569', marginTop: '6px' }}>
-                          <strong>Category:</strong> {m.mcpData.top_matches[0].category} &bull; <strong>Severity:</strong> {m.mcpData.top_matches[0].severity}
-                        </div>
-
-                        <div style={{ fontSize: '13px', color: '#475569', marginTop: '4px' }}>
-                          <strong>Immediate Action:</strong> {m.mcpData.top_matches[0].immediate_fix}
-                        </div>
-
-                        {/* Matched Signals */}
-                        {m.mcpData.top_matches[0].why_matched && (
-                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
-                            <strong>Why matched:</strong> {m.mcpData.top_matches[0].why_matched.join(', ')}
-                          </div>
-                        )}
-                      </div>
+                      </>
                     )}
 
                     {/* Rich Checklist Card */}

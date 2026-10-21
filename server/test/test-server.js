@@ -45,7 +45,7 @@ async function runTests() {
     console.log('Human review required?', parsedHigh.human_review_required);
     console.log('');
 
-    // Test 3: diagnose_issue (Low confidence)
+    // Test 3: diagnose_issue (Low confidence / vague input)
     console.log('4. Testing diagnose_issue with vague input: "some strange mystery"...');
     const diagLow = await client.callTool({
       name: 'diagnose_issue',
@@ -54,10 +54,16 @@ async function runTests() {
       }
     });
     const parsedLow = JSON.parse(diagLow.content[0].text);
-    console.log('Confidence:', parsedLow.top_matches[0]?.confidence);
+    console.log('Top matches count:', parsedLow.top_matches.length);
     console.log('Human review required?', parsedLow.human_review_required);
     console.log('Human review note:', parsedLow.human_review_note);
     console.log('Speakable:', parsedLow.speakable_summary);
+    if (parsedLow.top_matches.length !== 0) {
+      throw new Error(`Expected empty top_matches for vague input, got ${parsedLow.top_matches.length}`);
+    }
+    if (!parsedLow.human_review_required) {
+      throw new Error('Expected human_review_required to be true for vague input!');
+    }
     console.log('');
 
     // Test 4: get_fix_steps
@@ -169,6 +175,40 @@ async function runTests() {
     console.log('      Spoken Diagnostic Steps:', chatData4.spoken_response);
     if (chatData4.mcp_activity?.tool !== 'get_diagnostic_steps' || chatData4.mcp_activity?.arguments?.fault_id !== 'dns-failure') {
       throw new Error('Expected get_diagnostic_steps for dns-failure from session context!');
+    }
+
+    // 8e. Vague input in a new session -> empty top_matches, no fault saved, then "How do I fix it?" -> prompt_for_description
+    console.log('   e) User enters vague input in new session, then asks "How do I fix it?"...');
+    const vagueSessionId = 'vague-session-' + Date.now();
+    const chatResVague = await fetch('http://localhost:3001/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'some strange mystery', sessionId: vagueSessionId })
+    });
+    const chatDataVague = await chatResVague.json();
+    console.log('      Vague query top_matches count:', chatDataVague.mcp_activity?.result?.top_matches?.length);
+    console.log('      Vague query session last_diagnosed_fault_id:', chatDataVague.last_diagnosed_fault_id);
+    if (chatDataVague.mcp_activity?.result?.top_matches?.length !== 0) {
+      throw new Error('Expected 0 top_matches for vague query!');
+    }
+    if (chatDataVague.last_diagnosed_fault_id !== null) {
+      throw new Error(`Expected null last_diagnosed_fault_id, got ${chatDataVague.last_diagnosed_fault_id}`);
+    }
+
+    // Now follow up with "How do I fix it?" in the vague session
+    const chatResFixAfterVague = await fetch('http://localhost:3001/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'How do I fix it?', sessionId: vagueSessionId })
+    });
+    const chatDataFixAfterVague = await chatResFixAfterVague.json();
+    console.log('      Follow-up intent:', chatDataFixAfterVague.intent);
+    console.log('      Follow-up response:', chatDataFixAfterVague.spoken_response);
+    if (chatDataFixAfterVague.intent !== 'prompt_for_description') {
+      throw new Error(`Expected intent prompt_for_description, got ${chatDataFixAfterVague.intent}`);
+    }
+    if (!chatDataFixAfterVague.spoken_response.includes("haven't diagnosed a network problem yet")) {
+      throw new Error('Expected prompt for description on fix after vague query!');
     }
 
     console.log('\n======================================================');

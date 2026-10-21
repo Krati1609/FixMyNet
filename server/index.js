@@ -156,8 +156,12 @@ app.post('/api/chat', async (req, res) => {
     // 2. Call MCP Server using StreamableHTTPClientTransport
     const mcpActivity = await executeMcpCall(MCP_ENDPOINT, route.tool, route.arguments);
 
-    // 3. Update session's last diagnosed fault if diagnose_issue was called
-    if (route.tool === 'diagnose_issue' && mcpActivity.result?.top_matches?.[0]) {
+    // 3. Update session's last diagnosed fault ONLY if diagnose_issue returned a valid match with reasons
+    if (
+      route.tool === 'diagnose_issue' &&
+      mcpActivity.result?.top_matches?.[0]?.id &&
+      mcpActivity.result.top_matches[0].why_matched?.length > 0
+    ) {
       const topMatch = mcpActivity.result.top_matches[0];
       sessionStore.setLastDiagnosedFault(sessionId, topMatch.id, topMatch.name);
     }

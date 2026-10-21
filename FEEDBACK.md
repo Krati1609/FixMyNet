@@ -1,64 +1,56 @@
-# Hackathon Feedback & Post-Mortem: FixMyNet
+# Hackathon Feedback: FixMyNet
 
-This document outlines honest product and developer feedback from building **FixMyNet**.
+This document outlines project tool usage and developer feedback for **FixMyNet**.
 
 ---
 
 ## 1. Tools and SDKs Used
 
-* **Model Context Protocol SDK (`@modelcontextprotocol/sdk` v1.32.1)**:
-  Used to implement the network diagnostic tools on the server and to invoke them from the client bridge over the Streamable HTTP transport (spec version `2025-11-25+`, stateless mode).
-* **Node.js & Express**:
-  Used to expose the `/mcp` Streamable HTTP endpoint, DNS rebinding headers, and the `/api/chat` client bridge with session context.
-* **Web Speech API & `window.speechSynthesis`**:
-  Used in the browser for voice recognition (microphone input) and spoken voice feedback to simulate natural voice assistant workflows without requiring proprietary physical devices.
-* **React & Vite**:
-  Used for a single-screen dashboard with split chat and real-time MCP protocol inspection.
+* **`@modelcontextprotocol/sdk` (v1.32.1)**:
+  Used to implement the self-hosted MCP server (`McpServer`, `StreamableHTTPServerTransport`) on `/mcp` in stateless mode and to invoke it from the backend bridge (`Client`, `StreamableHTTPClientTransport`) using the Streamable HTTP transport (negotiating protocol version `2025-11-25`).
+* **Express**:
+  Used to host the HTTP server on port 3001, providing the `/mcp` transport endpoint, CORS configuration, and the `/api/chat` session-aware conversational bridge.
+* **Zod**:
+  Used to define and validate input schemas and argument constraints for all 5 MCP tools (`diagnose_issue`, `get_fix_steps`, `get_diagnostic_steps`, `list_fault_categories`, `run_checklist`).
+* **React + Vite**:
+  Used to build the single-screen web interface, providing the voice chat interface and the real-time MCP Activity inspector side panel.
+* **Web Speech API**:
+  Used in the browser for microphone voice input (`webkitSpeechRecognition` / `SpeechRecognition`) and speech output (`window.speechSynthesis`).
 * **Antigravity**:
-  Used as the AI pair programmer and agentic workspace for rapid architecture design, test harness creation, and debugging.
+  Used as the AI pair-programming assistant and development environment for architecture implementation, test harness design, and refactoring.
 
 ---
 
-## 2. What Worked Well
+## 2. AWS Services Used
 
-* **Streamable HTTP Transport Unification**:
-  Moving from the legacy dual-endpoint SSE architecture to a single `/mcp` endpoint simplifies routing, reverse proxies, and CORS configuration.
-* **Stateless Mode with per-request Transports**:
-  Creating a fresh `StreamableHTTPServerTransport` with `sessionIdGenerator: undefined` works cleanly for serverless and horizontal scaling without memory leaks.
-* **Fault-First Routing with Session Memory**:
-  Checking for fault descriptions first and remembering the diagnosed fault ID allows users to naturally ask "how do I fix it?" or "what are the diagnostic steps?" without having to restate the problem.
-* **Deterministic Scoring + Voice Summaries**:
-  Separating structured JSON data from speakable voice responses allowed both programmatic integration and natural-sounding voice output.
-* **Real-time Protocol Visibility**:
-  Having a visible side panel showing the raw JSON-RPC tool calls, arguments, and latency provides judges with direct proof of MCP execution.
-* *[My Honest Notes: Add any specific personal highlights here]*
+* **None used** (FixMyNet runs self-hosted and 100% locally on Node.js without cloud dependencies).
 
 ---
 
-## 3. What Needs Work
+## 3. What Worked Well
 
-* **Streamable HTTP Documentation**:
-  The distinction between stateful (with session IDs and long-lived SSE) and stateless modes in the JavaScript SDK could benefit from more end-to-end vanilla Express examples in the official docs.
-* **Web Speech API Browser Variance**:
-  Chrome and Edge support `webkitSpeechRecognition` well, but Firefox and Safari still require text input fallback.
-* **Standardized Audio Metadata in MCP**:
-  MCP tool outputs currently handle text, images, and resources; having standard voice/speech synthesis hints in the schema would streamline voice assistants.
-* *[My Honest Notes: Add any developer friction points or issues you encountered]*
+- The SDK's Streamable HTTP transport was easy to get running. A real client-to-server handshake negotiated protocol version 2025-11-25, so I could check the spec requirement with code.
+- Having an official client in the same SDK made testing simple. I could test the server the way a real client would call it, and the same client powers the live activity panel in the app.
+- Zod schemas keep tool inputs strict and make each tool's purpose clear to the client.
+- The rules allow a simulated Alexa+ experience, so I could build and demo everything on my laptop without a device.
 
 ---
 
-## 4. Onboarding Experience
+## 4. What Needs Work
 
-* **Getting Started**:
-  Setting up modern ES modules with Node.js and `@modelcontextprotocol/sdk` is straightforward once the package exports and Zod compatibility are clear.
-* **Debugging**:
-  Testing with custom client scripts using `StreamableHTTPClientTransport` proved much faster and more repeatable than manual browser testing.
-* *[My Honest Notes: Add your impressions on learning curve and setup time]*
+- Stateless mode needs a fresh transport and server for every request, and reusing one can cause request ID conflicts. This isn't obvious at first, and a short "common pitfalls" note in the docs would save time.
+- The Web Speech API only works reliably in Chrome, so the voice demo is limited to that browser.
+- Testing with one-line commands in Windows PowerShell broke because of quote escaping, so I had to move the logic into a helper module and test it with a normal script. Setup notes for Windows would help.
+- Antigravity's newer desktop app has no file editor, and the editor is a separate Antigravity IDE download. A hint about this on first launch would help new users.
 
 ---
 
-## 5. Would I Build Again?
+## 5. Onboarding Experience
 
-* **Verdict**:
-  Yes. The Model Context Protocol provides an open, standardized contract between agentic assistants and domain-specific tools. Expanding this server to support automated ping/traceroute network probes and hardware switch APIs would be a natural next step.
-* *[My Honest Notes: Final personal verdict on the hackathon experience]*
+It felt good. Everything started working quickly. One command started the server and the web app together, and the voice chat worked smoothly right away. Running the app was quick and easy.
+
+---
+
+## 6. Would I Build Again?
+
+Yes. MCP is a small, clear idea, and I would like to build something bigger with it. If something goes wrong or I want to improve this project, I'd happily build it again to make it better.

@@ -1,6 +1,8 @@
 # FixMyNet: Network Troubleshooting Assistant
 
-**FixMyNet** is an intelligent network troubleshooting assistant built for conversational voice interfaces. It exposes a self-hosted Model Context Protocol (MCP) server adhering to the official **Streamable HTTP transport** specification (spec version 2025-11-25+ in stateless mode), paired with an interactive web application that provides voice input, spoken answers, session-aware intent routing, and real-time MCP activity inspection.
+Submission for the Alexa+ track: a self-hosted MCP server (Streamable HTTP) plus a simulated Alexa+ web app.
+
+**FixMyNet** is an intelligent network troubleshooting assistant built for conversational voice interfaces. It exposes a self-hosted Model Context Protocol (MCP) server adhering to the official **Streamable HTTP transport** specification (negotiating protocol version `2025-11-25` in stateless mode), paired with an interactive web application that provides voice input, spoken answers, session-aware intent routing, and real-time MCP activity inspection.
 
 ---
 
@@ -74,10 +76,20 @@ FixMyNet helps users and voice assistants diagnose and resolve home and enterpri
 ## How It Uses MCP
 
 * **Official SDK**: Built using `@modelcontextprotocol/sdk` (v1.32.1).
+* **Protocol Version**: Actively negotiates protocol version **`2025-11-25`** (verified via SDK `SUPPORTED_PROTOCOL_VERSIONS` and runtime client handshake).
 * **Streamable HTTP Transport**: Operates over a single `/mcp` HTTP endpoint (replacing older legacy HTTP+SSE architectures) using `StreamableHTTPServerTransport` and `StreamableHTTPClientTransport`.
 * **Stateless Mode**: Configured with `sessionIdGenerator: undefined` to ensure robust, isolated, and scalable per-request execution without session state drift.
 * **Zod Schemas**: Every tool defines strict Zod input validation schemas and descriptive metadata.
 * **Real-time Protocol Inspection**: The web application acts as an MCP client observer, rendering the exact JSON-RPC payload, tool arguments, response schema, and round-trip duration for every voice command.
+
+---
+
+## Known Limitations
+
+* **Deterministic Keyword Matching**: Diagnoses are scored against 20 curated network fault profiles using tokenized keyword and phrase scoring rather than an unpredictable generative model.
+* **No Host Network Scanning**: FixMyNet reasons about user-described symptoms and telemetry; it does not execute intrusive packet captures or port scans on the host machine.
+* **Browser Speech Recognition**: Voice input via the browser Web Speech API (`webkitSpeechRecognition`) works best in Chromium-based browsers (Chrome, Edge). In Firefox or Safari, the full-featured keyboard text input is used.
+* **Offline-First Intent Routing**: The app is designed to run 100% locally with zero cloud API keys. The optional LLM routing layer is off unless an `OPENAI_API_KEY` is explicitly configured in `.env`.
 
 ---
 
@@ -132,17 +144,17 @@ npm test
 
 Click the **Mic button** (or use the one-click demo chips in the UI) to test the conversation flow:
 
-| Step | User Query / Voice Utterance | MCP Tool Invoked | Expected Voice & Visual Result |
+| Step / Chip | User Query / Voice Utterance | MCP Tool Invoked | Expected Voice & Visual Result |
 | :--- | :--- | :--- | :--- |
-| **1** | *"I can ping 8.8.8.8 but website names are not resolving"* | `diagnose_issue` | Identifies **DNS Resolution Failure** (~69% confidence), speaks immediate action, and stores `dns-failure` in session memory. |
-| **2** | First say the symptom (e.g. *"I can ping 8.8.8.8 but website names are not resolving"*), then say *"How do I fix it?"* | `get_fix_steps` | Calls `get_fix_steps` using the fault remembered in the session (`dns-failure`) and returns speakable resolution steps. |
-| **3** | *"What are the diagnostic steps to test it?"* | `get_diagnostic_steps` | Resolves `dns-failure` from session memory and returns speakable testing steps. |
-| **4** | *"Run the no internet checklist"* | `run_checklist` | Returns 5 ordered beginner steps starting from physical link verification to DNS resolution. |
-| **5** | *"What categories of network faults do you know?"* | `list_fault_categories` | Lists all 7 categories (DNS, Addressing & Routing, Physical & Data Link, Switching & VLANs, Performance, Wireless, Security) covering 20 faults. |
+| **1. Diagnose Symptom** | *"I can ping 8.8.8.8 but website names are not resolving"* | `diagnose_issue` | Identifies **DNS Resolution Failure** (~69% confidence), speaks immediate action, and stores `dns-failure` in session memory. |
+| **2. "How do I fix it?"** | First say the symptom (e.g. *"I can ping 8.8.8.8 but website names are not resolving"*), then say *"How do I fix it?"* | `get_fix_steps` | Calls `get_fix_steps` using the fault remembered in the session (`dns-failure`) and returns speakable resolution steps. |
+| **3. Diagnostic Steps** | *"What are the diagnostic steps to test it?"* | `get_diagnostic_steps` | Resolves `dns-failure` from session memory and returns speakable testing steps. |
+| **4. No Internet Checklist** | *"Run the no internet checklist"* | `run_checklist` | Returns 5 ordered beginner steps starting from physical link verification to DNS resolution. |
+| **5. List Categories** | *"What categories of network faults do you know?"* | `list_fault_categories` | Lists all 7 categories (DNS, Addressing & Routing, Physical & Data Link, Switching & VLANs, Performance, Wireless, Security) covering 20 faults. |
 
-### Session Safeguard Tests:
-* **Fix Without Prior Diagnosis**: Click "New Session" and ask *"Can you fix my issue?"*. The assistant will prompt: *"I haven't diagnosed a network problem yet for this session. Could you describe what issue or symptoms you are experiencing first?"*
-* **Low-Confidence Safeguard**: Ask *"Something is behaving strangely on my computer"*. When confidence is below 0.5, the assistant adds: *"Notice: Low confidence diagnosis (below 50%). Please verify these suggestions manually or check physical connections."*
+### Session Safeguard Tests (Chips 6 & 7):
+* **6. Fix without Diagnosis Test**: Click "New Session" (or reload) and ask *"Can you fix my issue?"*. The assistant prompts: *"I haven't diagnosed a network problem yet for this session. Could you describe what issue or symptoms you are experiencing first?"* (No fault card is displayed).
+* **7. Low Confidence Test**: Ask *"Something is behaving strangely on my computer"*. When confidence is below 0.5, the assistant adds: *"Notice: Low confidence diagnosis (below 50%). Please verify these suggestions manually or check physical connections."* Only the warning is shown, without misleading fault recommendations.
 
 ---
 
