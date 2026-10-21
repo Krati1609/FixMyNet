@@ -36,7 +36,8 @@ app.get('/', (req, res) => {
       'get_fix_steps',
       'get_diagnostic_steps',
       'list_fault_categories',
-      'run_checklist'
+      'run_checklist',
+      'run_network_check'
     ],
     chat_endpoint: '/api/chat'
   });
@@ -137,7 +138,7 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     // 1. Intent routing with session diagnosis memory
-    const route = await routeIntent(userMessage, sessionId);
+    let route = await routeIntent(userMessage, sessionId);
 
     // If intent requires user to describe the problem first
     if (route.direct_response) {
@@ -154,9 +155,28 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // 2. Call MCP Server using StreamableHTTPClientTransport
-    const mcpActivity = await executeMcpCall(MCP_ENDPOINT, route.tool, route.arguments);
+        // 2. Call MCP Server using StreamableHTTPClientTransport
+    let mcpActivity = await executeMcpCall(MCP_ENDPOINT, route.tool, route.arguments);
+    let networkCheck = null;
+    let checkSpoken = null;
+
+    // 2b. If a live check found a problem, feed its symptom summary into the
+    // existing diagnosis engine so the diagnosis card, fix steps and session memory work.
+    if (route.tool === 'run_network_check') {
+      networkCheck = mcpActivity.result;
+      checkSpoken = networkCheck?.spoken_summary || null;
+      if (networkCheck?.symptom_summary) {
+        const diagnosis = await executeMcpCall(MCP_ENDPOINT, 'diagnose_issue', {
+          symptoms: networkCheck.symptom_summary
+        });
+        diagnosis.triggered_by = 'run_network_check';
+        mcpActivity = diagnosis;
+        route = { ...route, tool: 'diagnose_issue', intent: 'diagnose' };
+      }
+    }
 
     // 3. Update session's last diagnosed fault ONLY if diagnose_issue returned a valid match with reasons
+    let diagnosisMatched = false;
     if (
       route.tool === 'diagnose_issue' &&
       mcpActivity.result?.top_matches?.[0]?.id &&
@@ -164,11 +184,20 @@ app.post('/api/chat', async (req, res) => {
     ) {
       const topMatch = mcpActivity.result.top_matches[0];
       sessionStore.setLastDiagnosedFault(sessionId, topMatch.id, topMatch.name);
+      diagnosisMatched = true;
     }
 
     // 4. Extract speakable response
-    const speakable = mcpActivity.result?.speakable_summary ||
+    let speakable = mcpActivity.result?.speakable_summary ||
       (typeof mcpActivity.result === 'string' ? mcpActivity.result : 'I have analyzed your request.');
+
+    if (checkSpoken) {
+      // Live check first, then the engine's explanation of the problem it found
+      speakable = networkCheck.symptom_summary ? `${checkSpoken} ${speakable}` : checkSpoken;
+    } else if (route.tool === 'diagnose_issue' && !diagnosisMatched) {
+      // Low-confidence nudge toward the live check
+      speakable += " Or say 'check my network' and I'll test this computer's connection.";
+    }
 
     res.json({
       user_message: userMessage,
@@ -177,6 +206,7 @@ app.post('/api/chat', async (req, res) => {
       spoken_response: speakable,
       display_text: speakable,
       mcp_activity: mcpActivity,
+      network_check: networkCheck,
       session_id: sessionId,
       last_diagnosed_fault_id: sessionStore.getSession(sessionId).lastDiagnosedFaultId
     });

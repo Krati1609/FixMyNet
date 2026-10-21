@@ -1,3 +1,4 @@
+import NetworkCheckCard from './NetworkCheckCard.jsx';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
@@ -22,7 +23,8 @@ const DEMO_COMMANDS = [
   { label: '4. No Internet Checklist', text: 'Run the no internet checklist' },
   { label: '5. List Categories', text: 'What categories of network faults do you know?' },
   { label: '6. Fix without Diagnosis Test', text: 'Can you fix my issue?' },
-  { label: '7. Low Confidence Test', text: 'Something is behaving strangely on my computer' }
+  { label: '7. Low Confidence Test', text: 'Something is behaving strangely on my computer' },
+  { label: '8. Live Network Check', text: 'Check my network' }
 ];
 
 export default function App() {
@@ -194,6 +196,7 @@ export default function App() {
         text: data.spoken_response,
         mcpData: data.mcp_activity?.result,
         tool: data.mcp_activity?.tool,
+        networkCheck: data.network_check,
         intent: data.intent,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -305,6 +308,9 @@ export default function App() {
                     </div>
 
                     <div className="assistant-text">{m.text}</div>
+
+                    {/* Live network check results */}
+                    {m.networkCheck && <NetworkCheckCard check={m.networkCheck} />}
 
                     {/* Diagnosis Result: Only show fault card if there is a real match with why_matched reasons */}
                     {m.mcpData && m.tool === 'diagnose_issue' && (
@@ -420,6 +426,12 @@ export default function App() {
               </div>
             ))}
 
+                        {messages.length === 1 && !isLoading && (
+              <div className="empty-hint">
+                $ try a chip below, or tap the mic and describe your problem_
+              </div>
+            )}
+
             {isLoading && (
               <div className="message-row">
                 <div className="message-bubble assistant-bubble" style={{ color: '#64748b', fontStyle: 'italic' }}>
@@ -442,6 +454,7 @@ export default function App() {
                 >
                   {chip.label}
                 </button>
+                
               ))}
             </div>
 
@@ -484,36 +497,7 @@ export default function App() {
               </button>
             </form>
 
-            {/* Decorative Crisp Pixel Art Motif */}
-            <div className="pixel-art-footer" aria-hidden="true">
-              <svg width="132" height="22" viewBox="0 0 132 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ shapeRendering: 'crispEdges' }}>
-                {/* Blocky pixel cloud left */}
-                <rect x="6" y="9" width="8" height="4" fill="var(--water)" opacity="0.6" />
-                <rect x="10" y="5" width="12" height="4" fill="var(--water)" opacity="0.6" />
-                <rect x="14" y="9" width="14" height="4" fill="var(--water)" opacity="0.6" />
-                <rect x="8" y="13" width="18" height="3" fill="var(--water)" opacity="0.4" />
-
-                {/* Tiny signal tower / router in the center */}
-                <rect x="65" y="2" width="2" height="2" fill="var(--accent)" opacity="0.85" />
-                <rect x="61" y="4" width="2" height="2" fill="var(--line)" />
-                <rect x="69" y="4" width="2" height="2" fill="var(--line)" />
-                <rect x="58" y="6" width="2" height="2" fill="var(--water)" />
-                <rect x="72" y="6" width="2" height="2" fill="var(--water)" />
-                <rect x="65" y="4" width="2" height="7" fill="var(--ink-soft)" />
-                <rect x="63" y="7" width="6" height="1" fill="var(--ink-soft)" />
-                <rect x="62" y="10" width="8" height="1" fill="var(--ink-soft)" />
-                <rect x="60" y="12" width="12" height="5" fill="var(--ink)" />
-                <rect x="62" y="14" width="2" height="1" fill="var(--ok)" />
-                <rect x="65" y="14" width="2" height="1" fill="var(--ok)" />
-                <rect x="68" y="14" width="2" height="1" fill="var(--ok)" />
-
-                {/* Blocky pixel cloud right */}
-                <rect x="104" y="7" width="10" height="4" fill="var(--water)" opacity="0.5" />
-                <rect x="110" y="3" width="12" height="4" fill="var(--water)" opacity="0.5" />
-                <rect x="114" y="7" width="12" height="4" fill="var(--water)" opacity="0.5" />
-                <rect x="106" y="11" width="18" height="3" fill="var(--water)" opacity="0.35" />
-              </svg>
-            </div>
+            
           </div>
         </section>
 
@@ -583,8 +567,39 @@ export default function App() {
               ))
             )}
           </div>
-        </section>
+                </section>
       </div>
+
+      {/* Decorative pixel strip */}
+      <footer className="pixel-strip" aria-hidden="true">
+        <svg width="100%" height="44" xmlns="http://www.w3.org/2000/svg" style={{ shapeRendering: 'crispEdges' }}>
+          <defs>
+            <pattern id="pixel-scene" width="260" height="44" patternUnits="userSpaceOnUse">
+              {/* cloud A */}
+              <rect x="10" y="16" width="32" height="6" fill="var(--water)" opacity="0.55" />
+              <rect x="16" y="10" width="16" height="6" fill="var(--water)" opacity="0.55" />
+              <rect x="32" y="12" width="8" height="4" fill="var(--water)" opacity="0.55" />
+              {/* cloud B */}
+              <rect x="170" y="8" width="24" height="6" fill="var(--water)" opacity="0.45" />
+              <rect x="176" y="4" width="12" height="4" fill="var(--water)" opacity="0.45" />
+              <rect x="190" y="6" width="8" height="4" fill="var(--water)" opacity="0.45" />
+              {/* signal tower */}
+              <rect x="111" y="12" width="2" height="4" fill="var(--accent)" opacity="0.85" />
+              <rect x="107" y="10" width="2" height="2" fill="var(--line)" />
+              <rect x="115" y="10" width="2" height="2" fill="var(--line)" />
+              <rect x="103" y="8" width="2" height="2" fill="var(--water)" />
+              <rect x="119" y="8" width="2" height="2" fill="var(--water)" />
+              <rect x="111" y="16" width="2" height="22" fill="var(--ink-soft)" />
+              <rect x="107" y="22" width="10" height="2" fill="var(--ink-soft)" />
+              <rect x="105" y="28" width="14" height="2" fill="var(--ink-soft)" />
+              <rect x="106" y="34" width="12" height="4" fill="var(--ink)" />
+              {/* ground */}
+              <rect x="0" y="38" width="260" height="6" fill="var(--water)" opacity="0.45" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="44" fill="url(#pixel-scene)" />
+        </svg>
+      </footer>
     </div>
   );
 }

@@ -50,6 +50,24 @@ export async function routeIntent(userMessage, sessionId) {
     };
   }
 
+    // 2b. Live network check intent (short, explicit commands only, so
+  // "check why my internet is slow" still goes to fault diagnosis)
+  const networkCheckPatterns = [
+    /\b(run|do|start|perform)\s+(a\s+|an\s+)?(network|connection|internet)\s+(check|test|scan)\b/,
+    /\bcheck\s+(my|the|this)\s+(network|connection|internet|wi-?fi)\b/,
+    /\btest\s+(my|the|this)\s+(network|connection|internet|wi-?fi)\b/,
+    /\b(network|connection|internet)\s+(check|test|scan)\b/,
+    /\bis\s+my\s+(internet|network|wi-?fi|connection)\s+(working|ok|okay|healthy)\b/
+  ];
+  if (lower.split(/\s+/).length <= 8 && networkCheckPatterns.some((p) => p.test(lower))) {
+    return {
+      tool: 'run_network_check',
+      arguments: {},
+      routed_by: 'network_check_rule',
+      intent: 'network_check'
+    };
+  }
+
   // 3. Check for a fault description FIRST
   // Use scoring engine to see if the user provided meaningful symptom or fault keywords
   const symptomAnalysis = scoreSymptoms(text);

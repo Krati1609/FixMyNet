@@ -18,6 +18,8 @@ This document outlines project tool usage and developer feedback for **FixMyNet*
   Used in the browser for microphone voice input (`webkitSpeechRecognition` / `SpeechRecognition`) and speech output (`window.speechSynthesis`).
 * **Antigravity**:
   Used as the AI pair-programming assistant and development environment for architecture implementation, test harness design, and refactoring.
+* **Node.js built-ins (`node:net`, `node:dns/promises`, `node:os`, `fetch`)**
+Used for the `run_network_check` tool: TCP connection tests, system and public DNS lookups, adapter counts and an HTTPS request, with no extra dependencies.
 
 ---
 
@@ -33,6 +35,8 @@ This document outlines project tool usage and developer feedback for **FixMyNet*
 - Having an official client in the same SDK made testing simple. I could test the server the way a real client would call it, and the same client powers the live activity panel in the app.
 - Zod schemas keep tool inputs strict and make each tool's purpose clear to the client.
 - The rules allow a simulated Alexa+ experience, so I could build and demo everything on my laptop without a device.
+- Adding a sixth tool was quick. Register it in the MCP server, add one routing rule, and the activity panel and tests picked it up. The tool's output can also feed the existing diagnosis tool, so tools can build on each other.
+- Node's built-ins were enough for real network checks, with no extra packages.
 
 ---
 
@@ -42,6 +46,8 @@ This document outlines project tool usage and developer feedback for **FixMyNet*
 - The Web Speech API only works reliably in Chrome, so the voice demo is limited to that browser.
 - Testing with one-line commands in Windows PowerShell broke because of quote escaping, so I had to move the logic into a helper module and test it with a normal script. Setup notes for Windows would help.
 - Antigravity's newer desktop app has no file editor, and the editor is a separate Antigravity IDE download. A hint about this on first launch would help new users.
+- Node has no easy cross-platform ping without admin rights, so I used TCP connection tests instead. A small built-in helper for this would help.
+- The direct public-DNS test times out on my network, so one check shows red even when the connection is healthy overall. I kept it and show the reason on the card.
 
 ---
 

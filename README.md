@@ -2,6 +2,8 @@
 
 Submission for the Alexa+ track: a self-hosted MCP server (Streamable HTTP) plus a simulated Alexa+ web app.
 
+![FixMyNet screenshot](docs/screenshot.png)
+
 **FixMyNet** is an intelligent network troubleshooting assistant built for conversational voice interfaces. It exposes a self-hosted Model Context Protocol (MCP) server adhering to the official **Streamable HTTP transport** specification (negotiating protocol version `2025-11-25` in stateless mode), paired with an interactive web application that provides voice input, spoken answers, session-aware intent routing, and real-time MCP activity inspection.
 
 ---
@@ -15,6 +17,7 @@ FixMyNet helps users and voice assistants diagnose and resolve home and enterpri
 * **Voice-Ready Answers**: Every tool outputs concise, speakable text designed for text-to-speech engines (speechSynthesis).
 * **Beginner Checklists**: Provides structured, step-by-step troubleshooting workflows for "no internet", "slow network", and "intermittent drops".
 * **Interactive Web Interface**: Single-screen dashboard with microphone voice input (Web Speech API), spoken replies, session reset, and a live MCP Activity side panel showing JSON-RPC tool calls, arguments, and latency in real time.
+* **Live Network Check**: A sixth tool, `run_network_check`, runs real connection tests on the computer hosting the server: network adapters, TCP connections to 1.1.1.1 and 8.8.8.8, system DNS lookup, a direct query to a public DNS server, and an HTTPS request. It returns a pass/fail checklist with latency. If it finds a problem, it automatically runs the diagnosis engine on it, so you get a fix and "How do I fix it?" works from session memory. Say "check my network" or click the chip.
 
 ---
 
@@ -62,12 +65,14 @@ FixMyNet helps users and voice assistants diagnose and resolve home and enterpri
 |  |  3. get_diagnostic_steps(fault_id)                                           | |
 |  |  4. list_fault_categories()                                                  | |
 |  |  5. run_checklist(scenario)                                                  | |
+|  |  6. run_network_check()   -> live checks via server/src/netcheck.js          | |
 |  +------------------------------------------------------------------------------+ |
-|                                          |
-|                                          v
+|                                          |                                        |
+|                                          v                                        |
 |  +------------------------------------------------------------------------------+ |
 |  | Deterministic Rule Engine & faults.json (20 Original Fault Profiles)         | |
 |  +------------------------------------------------------------------------------+ |
+|  | Live checks (node:dns, node:net, node:os) on the host computer               | |
 +-----------------------------------------------------------------------------------+
 ```
 
@@ -86,10 +91,12 @@ FixMyNet helps users and voice assistants diagnose and resolve home and enterpri
 
 ## Known Limitations
 
-* **Deterministic Keyword Matching**: Diagnoses are scored against 20 curated network fault profiles using tokenized keyword and phrase scoring rather than an unpredictable generative model.
-* **No Host Network Scanning**: FixMyNet reasons about user-described symptoms and telemetry; it does not execute intrusive packet captures or port scans on the host machine.
-* **Browser Speech Recognition**: Voice input via the browser Web Speech API (`webkitSpeechRecognition`) works best in Chromium-based browsers (Chrome, Edge). In Firefox or Safari, the full-featured keyboard text input is used.
-* **Offline-First Intent Routing**: The app is designed to run 100% locally with zero cloud API keys. The optional LLM routing layer is off unless an `OPENAI_API_KEY` is explicitly configured in `.env`.
+* **Deterministic Keyword Matching**: Described symptoms are scored against 20 curated network fault profiles using tokenized keyword and phrase scoring, not a generative model. Unusual phrasing or faults outside those 20 profiles may not match, and the app then shows a manual-review notice and suggests the live check instead of guessing.
+* **Live Check Scope**: The `run_network_check` tool tests only the computer that is running the FixMyNet server (adapters, TCP connections to 1.1.1.1 and 8.8.8.8, DNS lookups, and an HTTPS request). It is not a scanner: no packet captures, no port scans, fixed targets only, and nothing a user types is ever used as a target. IP addresses are never returned, only adapter counts.
+* **TCP Tests, Not Ping**: Connectivity is tested with TCP connections, not ICMP ping, so it needs no admin rights and works on Windows.
+* **Public DNS Check Can Fail on Some Networks**: The direct query to a public DNS server can time out on networks that block direct DNS traffic. It is reported honestly as a failed check, but the overall result only drops to "degraded" if the system DNS lookup also fails.
+* **Browser Speech**: Voice input uses the browser Web Speech API, which works best in Chrome or Edge. Chrome's recognition sends audio to a cloud speech service, so voice input needs an internet connection; with the network down, use the text box or the demo chips. In Firefox or Safari, use text input.
+* **No Cloud Keys Required**: The MCP server, rule engine, session memory and live checks run locally with no API keys. The optional LLM routing layer is off unless an `OPENAI_API_KEY` is set in `.env`.
 
 ---
 
@@ -132,7 +139,7 @@ npm run dev
 
 ### Running Automated MCP Tests
 
-Execute the automated test suite verifying all 5 tools over Streamable HTTP transport and session intent routing:
+Execute the automated test suite verifying all 6 tools over Streamable HTTP transport and session intent routing:
 
 ```bash
 npm test
@@ -151,6 +158,10 @@ Click the **Mic button** (or use the one-click demo chips in the UI) to test the
 | **3. Diagnostic Steps** | *"What are the diagnostic steps to test it?"* | `get_diagnostic_steps` | Resolves `dns-failure` from session memory and returns speakable testing steps. |
 | **4. No Internet Checklist** | *"Run the no internet checklist"* | `run_checklist` | Returns 5 ordered beginner steps starting from physical link verification to DNS resolution. |
 | **5. List Categories** | *"What categories of network faults do you know?"* | `list_fault_categories` | Lists all 7 categories (DNS, Addressing & Routing, Physical & Data Link, Switching & VLANs, Performance, Wireless, Security) covering 20 faults. |
+| **6** | *"Check my network"* | `run_network_check` (then `diagnose_issue` if a problem is found) | Runs live connection tests on this computer and shows a checklist with latency. If something is wrong, it diagnoses it automatically. |
+
+### Live Check Failure Test
+Turn Wi-Fi off, then type "check my network" (or click chip 8). The check reports the connection as down, a diagnosis card appears, and "How do I fix it?" returns fix steps from session memory. Note: Chrome's voice recognition needs internet, so type or use the chip while offline.
 
 ### Session Safeguard Tests (Chips 6 & 7):
 * **6. Fix without Diagnosis Test**: Click "New Session" (or reload) and ask *"Can you fix my issue?"*. The assistant prompts: *"I haven't diagnosed a network problem yet for this session. Could you describe what issue or symptoms you are experiencing first?"* (No fault card is displayed).

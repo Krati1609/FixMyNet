@@ -1,3 +1,4 @@
+import { runNetworkCheck } from './netcheck.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
@@ -104,6 +105,22 @@ export function createFixMyNetServer() {
         {
           type: 'text',
           text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  });
+
+  // Tool 6: run_network_check
+  server.registerTool('run_network_check', {
+    description: 'Run live connection tests (adapter, TCP reachability, DNS, HTTPS) on the computer hosting this server and report what is wrong.',
+    inputSchema: {}
+  }, async () => {
+    const result = await runNetworkCheck();
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ ...result, speakable_summary: result.spoken_summary }, null, 2)
         }
       ]
     };

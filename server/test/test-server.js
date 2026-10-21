@@ -27,6 +27,12 @@ async function runTests() {
     const toolsResult = await client.listTools();
     console.log(`Found ${toolsResult.tools.length} registered tools:`);
     toolsResult.tools.forEach(t => console.log(`   - ${t.name}: ${t.description.slice(0, 70)}...`));
+        if (toolsResult.tools.length !== 6) {
+      throw new Error(`Expected 6 tools, got ${toolsResult.tools.length}`);
+    }
+    if (!toolsResult.tools.some((t) => t.name === 'run_network_check')) {
+      throw new Error('Expected run_network_check to be registered!');
+    }
     console.log('');
 
     // Test 2: diagnose_issue (High confidence)
@@ -110,6 +116,32 @@ async function runTests() {
     console.log('Checklist title:', parsedChecklist.title);
     console.log('Steps count:', parsedChecklist.steps?.length);
     console.log('Speakable:', parsedChecklist.speakable_summary);
+    console.log('');
+
+        // Test 7b: run_network_check (live tests on this machine, so only the shape is asserted)
+    console.log('8b. Testing run_network_check (live checks on this computer)...');
+    const netResult = await client.callTool({
+      name: 'run_network_check',
+      arguments: {}
+    });
+    const parsedNet = JSON.parse(netResult.content[0].text);
+    console.log('Overall:', parsedNet.overall);
+    console.log('Problem:', parsedNet.problem);
+    console.log('Average latency (ms):', parsedNet.average_latency_ms);
+    console.log('Checks:', parsedNet.checks.map((c) => `${c.ok ? 'PASS' : 'FAIL'} ${c.name}`).join(' | '));
+    console.log('Speakable:', parsedNet.speakable_summary);
+    if (!['healthy', 'degraded', 'down'].includes(parsedNet.overall)) {
+      throw new Error(`Unexpected overall status: ${parsedNet.overall}`);
+    }
+    if (!Array.isArray(parsedNet.checks) || parsedNet.checks.length === 0) {
+      throw new Error('Expected a non-empty checks array!');
+    }
+    if (typeof parsedNet.spoken_summary !== 'string' || !parsedNet.spoken_summary) {
+      throw new Error('Expected a spoken_summary string!');
+    }
+    if (JSON.stringify(parsedNet).match(/\b\d{1,3}(\.\d{1,3}){3}\b/g)?.some((ip) => !['1.1.1.1', '8.8.8.8'].includes(ip))) {
+      throw new Error('Result must not expose any IP addresses other than the fixed test targets!');
+    }
     console.log('');
 
     // Test 8: Session Context & Intent Router Rules via /api/chat
@@ -209,6 +241,39 @@ async function runTests() {
     }
     if (!chatDataFixAfterVague.spoken_response.includes("haven't diagnosed a network problem yet")) {
       throw new Error('Expected prompt for description on fix after vague query!');
+    }
+
+        // 8f. "check my network" routes to run_network_check
+    console.log('   f) User says "check my network"...');
+    const netSessionId = 'net-session-' + Date.now();
+    const chatResNet = await fetch('http://localhost:3001/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'check my network', sessionId: netSessionId })
+    });
+    const chatDataNet = await chatResNet.json();
+    console.log('      Routed By:', chatDataNet.routed_by);
+    console.log('      Intent:', chatDataNet.intent);
+    console.log('      Network check overall:', chatDataNet.network_check?.overall);
+    console.log('      Spoken Response:', chatDataNet.spoken_response);
+    if (chatDataNet.routed_by !== 'network_check_rule') {
+      throw new Error(`Expected network_check_rule, got ${chatDataNet.routed_by}`);
+    }
+    if (!chatDataNet.network_check || !chatDataNet.network_check.overall) {
+      throw new Error('Expected network_check result in the chat response!');
+    }
+
+    // 8g. A longer description must NOT trigger the live check
+    console.log('   g) User says "check why my internet is slow" (should go to normal diagnosis)...');
+    const chatResLong = await fetch('http://localhost:3001/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'check why my internet is slow', sessionId: 'long-session-' + Date.now() })
+    });
+    const chatDataLong = await chatResLong.json();
+    console.log('      Routed By:', chatDataLong.routed_by);
+    if (chatDataLong.routed_by === 'network_check_rule') {
+      throw new Error('A symptom description should not trigger the live network check!');
     }
 
     console.log('\n======================================================');
