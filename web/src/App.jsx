@@ -483,6 +483,37 @@ export default function App() {
                 <span>Ask</span>
               </button>
             </form>
+
+            {/* Decorative Crisp Pixel Art Motif */}
+            <div className="pixel-art-footer" aria-hidden="true">
+              <svg width="132" height="22" viewBox="0 0 132 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ shapeRendering: 'crispEdges' }}>
+                {/* Blocky pixel cloud left */}
+                <rect x="6" y="9" width="8" height="4" fill="var(--water)" opacity="0.6" />
+                <rect x="10" y="5" width="12" height="4" fill="var(--water)" opacity="0.6" />
+                <rect x="14" y="9" width="14" height="4" fill="var(--water)" opacity="0.6" />
+                <rect x="8" y="13" width="18" height="3" fill="var(--water)" opacity="0.4" />
+
+                {/* Tiny signal tower / router in the center */}
+                <rect x="65" y="2" width="2" height="2" fill="var(--accent)" opacity="0.85" />
+                <rect x="61" y="4" width="2" height="2" fill="var(--line)" />
+                <rect x="69" y="4" width="2" height="2" fill="var(--line)" />
+                <rect x="58" y="6" width="2" height="2" fill="var(--water)" />
+                <rect x="72" y="6" width="2" height="2" fill="var(--water)" />
+                <rect x="65" y="4" width="2" height="7" fill="var(--ink-soft)" />
+                <rect x="63" y="7" width="6" height="1" fill="var(--ink-soft)" />
+                <rect x="62" y="10" width="8" height="1" fill="var(--ink-soft)" />
+                <rect x="60" y="12" width="12" height="5" fill="var(--ink)" />
+                <rect x="62" y="14" width="2" height="1" fill="var(--ok)" />
+                <rect x="65" y="14" width="2" height="1" fill="var(--ok)" />
+                <rect x="68" y="14" width="2" height="1" fill="var(--ok)" />
+
+                {/* Blocky pixel cloud right */}
+                <rect x="104" y="7" width="10" height="4" fill="var(--water)" opacity="0.5" />
+                <rect x="110" y="3" width="12" height="4" fill="var(--water)" opacity="0.5" />
+                <rect x="114" y="7" width="12" height="4" fill="var(--water)" opacity="0.5" />
+                <rect x="106" y="11" width="18" height="3" fill="var(--water)" opacity="0.35" />
+              </svg>
+            </div>
           </div>
         </section>
 
@@ -490,7 +521,7 @@ export default function App() {
         <section className="mcp-panel">
           <div className="mcp-panel-header">
             <div className="mcp-title">
-              <Activity size={18} color="#0284c7" />
+              <Activity size={18} color="var(--accent)" />
               <span>Real-Time MCP Activity</span>
               <span className="mcp-badge">POST /mcp</span>
             </div>
@@ -503,10 +534,10 @@ export default function App() {
             {mcpLogs.length === 0 ? (
               <div className="mcp-empty-state">
                 <Server size={44} className="mcp-empty-icon" />
-                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ink)', marginBottom: '6px' }}>
                   No MCP Calls Yet
                 </h3>
-                <p style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '13.5px', lineHeight: 1.5, color: 'var(--ink-soft)' }}>
                   Speak or type a question on the left to watch live MCP tool invocations (JSON-RPC requests, arguments, latency, and outputs) streaming over Streamable HTTP transport.
                 </p>
               </div>
@@ -516,7 +547,7 @@ export default function App() {
                   <div className="mcp-card-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span className="mcp-tool-pill">{log.tool}</span>
-                      <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600 }}>200 OK</span>
+                      <span className="mcp-status-pill">200 OK</span>
                     </div>
 
                     <div className="mcp-meta">
