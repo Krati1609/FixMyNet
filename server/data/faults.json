@@ -1,0 +1,593 @@
+[
+  {
+    "id": "dns-failure",
+    "name": "DNS Resolution Failure",
+    "category": "DNS",
+    "symptoms": [
+      "cannot open websites by domain name",
+      "can ping IP address but not website name",
+      "dns probe finished nxdomain",
+      "server IP address could not be found",
+      "dns",
+      "name resolution error",
+      "domain not found"
+    ],
+    "likely_causes": [
+      "Configured DNS server is unreachable or offline",
+      "Incorrect DNS IP address configured on client or router",
+      "Local DNS cache is corrupted"
+    ],
+    "diagnostic_steps": [
+      "Run nslookup google.com to see if your DNS server responds.",
+      "Ping 8.8.8.8 to verify if raw IP connectivity works.",
+      "Check your network adapter settings to see what DNS addresses are assigned."
+    ],
+    "fix_steps": [
+      "Set your primary DNS server to 1.1.1.1 and secondary to 8.8.8.8.",
+      "Flush your local DNS cache by running ipconfig /flushdns in the terminal.",
+      "Restart your router if it acts as the local DNS relay."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "wrong-default-gateway",
+    "name": "Incorrect Default Gateway",
+    "category": "Addressing & Routing",
+    "symptoms": [
+      "can reach local devices but no internet",
+      "ping router fails",
+      "destination host unreachable",
+      "default gateway not responding",
+      "wrong gateway",
+      "no route to host",
+      "local network works but external sites fail"
+    ],
+    "likely_causes": [
+      "Manual static IP setup with a typo in the gateway IP",
+      "DHCP server provided wrong gateway option 3",
+      "Subnet mismatch between client IP and gateway IP"
+    ],
+    "diagnostic_steps": [
+      "Run ipconfig or ip route show to find your active default gateway.",
+      "Ping the default gateway IP address directly.",
+      "Check if your IP address and gateway IP share the same network prefix."
+    ],
+    "fix_steps": [
+      "Switch your network adapter to obtain IP settings automatically via DHCP.",
+      "If using static IP, update your default gateway to match your router's actual LAN IP.",
+      "Verify that your subnet mask matches your local router network."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "duplex-mismatch",
+    "name": "Ethernet Duplex Mismatch",
+    "category": "Physical & Data Link",
+    "symptoms": [
+      "extremely slow wired throughput",
+      "excessive frame collisions",
+      "link speed drops to 10 or 100 megabits half duplex",
+      "high collision count on switch port",
+      "duplex mismatch",
+      "half duplex",
+      "slow wired transfer"
+    ],
+    "likely_causes": [
+      "One side of the link is forced to full duplex while the other is set to auto-negotiate",
+      "Faulty network driver reverting to half-duplex fallback",
+      "Old unmanaged switch incapable of auto-negotiation"
+    ],
+    "diagnostic_steps": [
+      "Check Ethernet link status and duplex mode in device adapter properties.",
+      "Inspect switch port error counters for late collisions and CRC errors.",
+      "Test transfer speeds between two wired hosts on the same switch."
+    ],
+    "fix_steps": [
+      "Set both the client adapter and switch port to Auto-Negotiation.",
+      "If auto-negotiation fails, hardcode both ends to 1000 Mbps Full Duplex.",
+      "Update your network interface card driver."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "vlan-misconfiguration",
+    "name": "VLAN Tagging Misconfiguration",
+    "category": "Switching & VLANs",
+    "symptoms": [
+      "wired port gets no DHCP lease",
+      "device isolated from intended subnet",
+      "untagged traffic dropped",
+      "wrong vlan",
+      "trunk port missing allowed vlan",
+      "cannot see office servers from port"
+    ],
+    "likely_causes": [
+      "Access port assigned to the wrong VLAN ID",
+      "Trunk port between switches not allowing the required VLAN",
+      "PVID or native VLAN mismatch causing frames to drop"
+    ],
+    "diagnostic_steps": [
+      "Verify the switch port VLAN assignment for the connected wall jack.",
+      "Confirm if trunk links allow tagged traffic for this VLAN ID.",
+      "Check if DHCP relay or helper address is enabled on the VLAN interface."
+    ],
+    "fix_steps": [
+      "Reassign the access port to the correct VLAN ID on the switch.",
+      "Ensure trunk links allow the specific VLAN tag.",
+      "Renew your client IP address after correcting the port VLAN."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "dhcp-pool-exhaustion",
+    "name": "DHCP Scope Pool Exhaustion",
+    "category": "Addressing & Routing",
+    "symptoms": [
+      "new devices cannot get IP address",
+      "self assigned 169.254 APIPA address",
+      "dhcp lookup failed",
+      "no ip offered",
+      "pool full",
+      "guest wifi not giving ip addresses",
+      "limited connectivity"
+    ],
+    "likely_causes": [
+      "All available IP addresses in the DHCP pool are leased out",
+      "DHCP lease time is set too long for high-turnover guest networks",
+      "IP lease leakage caused by abandoned virtual machines or guest devices"
+    ],
+    "diagnostic_steps": [
+      "Look at client IP to see if it starts with 169.254.",
+      "Log in to router or DHCP server and inspect active lease count.",
+      "Check DHCP scope range and subnet mask capacity."
+    ],
+    "fix_steps": [
+      "Expand the DHCP scope range or enlarge the subnet mask.",
+      "Reduce DHCP lease time to 2 or 4 hours for transient devices.",
+      "Clear stale DHCP leases on the router or DHCP server."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "high-latency",
+    "name": "Excessive Network Latency",
+    "category": "Performance",
+    "symptoms": [
+      "video calls freezing and stuttering",
+      "high ping in games",
+      "ping times above 150 milliseconds",
+      "sluggish web page loading",
+      "high latency",
+      "lag spikes",
+      "jitter"
+    ],
+    "likely_causes": [
+      "Local link congestion from background downloads or cloud backups",
+      "Suboptimal routing hop or peering bottleneck along ISP route",
+      "Wireless interference or excessive distance from access point"
+    ],
+    "diagnostic_steps": [
+      "Run traceroute or tracert to identify which hop introduces latency.",
+      "Ping your local router IP to check if the lag is inside your LAN.",
+      "Monitor bandwidth usage on local devices to see who is saturating the link."
+    ],
+    "fix_steps": [
+      "Enable Quality of Service QoS on your router to prioritize interactive traffic.",
+      "Pause large background downloads, torrents, or cloud synchronization.",
+      "Connect via an Ethernet cable instead of Wi-Fi for testing."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "packet-loss",
+    "name": "Network Packet Loss",
+    "category": "Performance",
+    "symptoms": [
+      "frequent request timed out responses",
+      "choppy voice on calls",
+      "packet loss percentage above 5 percent",
+      "dropped packets",
+      "broken downloads",
+      "ssh sessions freezing"
+    ],
+    "likely_causes": [
+      "Overloaded router CPU or buffer overflow",
+      "Damaged network cable or loose RJ45 connector",
+      "RF interference or weak Wi-Fi signal"
+    ],
+    "diagnostic_steps": [
+      "Run ping 8.8.8.8 -n 50 to measure the exact packet loss percentage.",
+      "Ping your local router simultaneously to isolate LAN vs WAN loss.",
+      "Check router CPU and memory utilization in the management portal."
+    ],
+    "fix_steps": [
+      "Replace the Ethernet cable connecting the computer or modem.",
+      "Move closer to your Wi-Fi router or switch to the 5 GHz band.",
+      "Reboot your router and modem to clear buffer congestion."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "ip-conflict",
+    "name": "Duplicate IP Address Conflict",
+    "category": "Addressing & Routing",
+    "symptoms": [
+      "intermittent network disconnects every few seconds",
+      "windows warning another device using your ip address",
+      "arp table flipping mac addresses",
+      "ip address conflict",
+      "duplicate ip",
+      "random connection dropouts"
+    ],
+    "likely_causes": [
+      "Static IP configured inside the active DHCP dynamic lease pool",
+      "Two devices manually assigned the exact same IP address",
+      "Rogue or secondary router offering overlapping IP leases"
+    ],
+    "diagnostic_steps": [
+      "Check event viewer or system logs for IP conflict notifications.",
+      "Disconnect your device and ping your IP from another machine to see if it replies.",
+      "Check the ARP table using arp -a to see if the MAC address alternates."
+    ],
+    "fix_steps": [
+      "Switch the conflicting device to receive an IP via DHCP.",
+      "Change static IP to an address outside the active DHCP distribution pool.",
+      "Reserve static IP bindings via DHCP reservations on the router."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "wrong-subnet-mask",
+    "name": "Incorrect Subnet Mask",
+    "category": "Addressing & Routing",
+    "symptoms": [
+      "can communicate with some local PCs but not others",
+      "broadcast traffic not reaching devices",
+      "wrong subnet mask",
+      "subnet mismatch",
+      "cannot see network printer on same subnet",
+      "one way traffic on local lan"
+    ],
+    "likely_causes": [
+      "Typo in manual subnet mask like 255.255.0.0 instead of 255.255.255.0",
+      "Mismatched CIDR prefix on static IP configurations",
+      "Inconsistent subnet configuration between router interface and hosts"
+    ],
+    "diagnostic_steps": [
+      "Compare subnet masks on two machines on the same local network.",
+      "Calculate the valid host range for your IP and subnet mask.",
+      "Attempt to ping an adjacent host that shares the intended subnet."
+    ],
+    "fix_steps": [
+      "Correct the subnet mask in adapter settings to match your router network.",
+      "Switch to DHCP to pull the verified subnet configuration automatically.",
+      "Verify subnet settings across all static devices on the LAN."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "wifi-interference",
+    "name": "Wi-Fi Radio Frequency Interference",
+    "category": "Wireless",
+    "symptoms": [
+      "wifi speeds drop near kitchen or appliances",
+      "erratic signal strength bars fluctuating",
+      "high packet drop on wireless but wired is fine",
+      "wifi interference",
+      "crowded channel",
+      "slow wireless only",
+      "disconnecting when walking around"
+    ],
+    "likely_causes": [
+      "Neighboring access points broadcasting on the same 2.4 GHz channel",
+      "Physical interference from microwaves, Bluetooth, or thick concrete walls",
+      "Too many devices competing for airtime on an old 2.4 GHz Wi-Fi 4 band"
+    ],
+    "diagnostic_steps": [
+      "Run a Wi-Fi analyzer app to inspect channel congestion around you.",
+      "Test network throughput over a wired Ethernet cable to verify the baseline.",
+      "Check if issues disappear when standing 5 feet from the router."
+    ],
+    "fix_steps": [
+      "Switch your devices to the 5 GHz or 6 GHz Wi-Fi frequency band.",
+      "Change 2.4 GHz router channel manually to 1, 6, or 11.",
+      "Relocate the wireless access point away from metal objects and appliances."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "mtu-mismatch",
+    "name": "Maximum Transmission Unit MTU Mismatch",
+    "category": "Addressing & Routing",
+    "symptoms": [
+      "can ping hosts and open small web pages but large sites hang",
+      "vpn disconnects on large file transfers",
+      "ssl handshake freezes",
+      "packet needs to be fragmented but DF set",
+      "mtu mismatch",
+      "black hole router",
+      "partial page load"
+    ],
+    "likely_causes": [
+      "Client MTU exceeds VPN or PPPoE tunnel capacity",
+      "Path MTU discovery failing due to ICMP Type 3 Code 4 blocked by firewall",
+      "Jumbo frames configured on one switch port but not end-to-end"
+    ],
+    "diagnostic_steps": [
+      "Run ping google.com -f -l 1472 to test maximum unfragmented packet size.",
+      "Reduce packet size incrementally until ping replies without fragmentation error.",
+      "Inspect MTU setting on client network interface and VPN adapter."
+    ],
+    "fix_steps": [
+      "Lower client or router MTU to 1420 for VPN connections or 1492 for PPPoE.",
+      "Enable MSS clamping on the border router or firewall.",
+      "Ensure ICMP fragmentation needed messages are not blocked."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "arp-issues",
+    "name": "ARP Cache Poisoning or Stale Entry",
+    "category": "Physical & Data Link",
+    "symptoms": [
+      "traffic redirected to wrong device",
+      "stale mac address in arp table",
+      "man in the middle warning",
+      "arp cache issue",
+      "cannot communicate with gateway after hardware change",
+      "arp resolution failure"
+    ],
+    "likely_causes": [
+      "Router or server replaced but client cached the old MAC address",
+      "Rogue host running ARP spoofing or gratuitous ARP attacks",
+      "IP migration between virtual machine hosts without gratuitous ARP"
+    ],
+    "diagnostic_steps": [
+      "Run arp -a to inspect the local ARP cache table.",
+      "Check if the gateway IP is mapped to an unfamiliar MAC address.",
+      "Verify if duplicate MAC addresses exist for different IP entries."
+    ],
+    "fix_steps": [
+      "Flush the ARP cache by running netsh interface ip delete arpcache or arp -d *.",
+      "Enable Dynamic ARP Inspection DAI on managed switches.",
+      "Restart the network adapter to refresh local address tables."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "firewall-port-blocking",
+    "name": "Firewall Blocking Application Port",
+    "category": "Security & Firewall",
+    "symptoms": [
+      "web browsing works but specific application cannot connect",
+      "port connection refused or timed out",
+      "email client cannot send or receive",
+      "game cannot connect to multiplayer server",
+      "firewall blocked",
+      "port closed",
+      "connection blocked"
+    ],
+    "likely_causes": [
+      "Host operating system firewall blocking incoming or outgoing port",
+      "Corporate or ISP perimeter firewall dropping traffic on non-standard ports",
+      "Antivirus software inspecting and dropping application socket"
+    ],
+    "diagnostic_steps": [
+      "Run Test-NetConnection -ComputerName target.com -Port 443 in PowerShell.",
+      "Temporarily check firewall logs for dropped outbound packets.",
+      "Test if the same application connects when using an alternate network."
+    ],
+    "fix_steps": [
+      "Create an outbound firewall rule permitting the required port.",
+      "Ensure your router port forwarding is configured if hosting a service.",
+      "Check that your antivirus network shield has not quarantined the app."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "cable-fault",
+    "name": "Damaged or Loose Ethernet Cable",
+    "category": "Physical & Data Link",
+    "symptoms": [
+      "ethernet cable unplugged error message",
+      "link light flashing intermittently or dark",
+      "speed drops from 1 Gbps to 100 Mbps",
+      "physical disconnect when touching cable",
+      "cable fault",
+      "bad patch lead",
+      "broken rj45 clip"
+    ],
+    "likely_causes": [
+      "Broken retaining clip on RJ45 connector causing loose contact",
+      "Pin wire fracture inside twisted pair cable due to bending or crushing",
+      "Poorly crimped patch cable with loose pair termination"
+    ],
+    "diagnostic_steps": [
+      "Inspect the physical RJ45 plastic clip on both ends of the cable.",
+      "Look at the link indicator LED on both the computer and switch port.",
+      "Test with a hardware cable tester or swap in a known good cable."
+    ],
+    "fix_steps": [
+      "Unplug and firmly reseat the Ethernet connector until it clicks.",
+      "Replace the Ethernet cable with a verified Category 6 patch cord.",
+      "Try plugging into a different switch port on the router."
+    ],
+    "severity": "high"
+  },
+  {
+    "id": "stp-loop",
+    "name": "Spanning Tree Protocol STP Loop",
+    "category": "Switching & VLANs",
+    "symptoms": [
+      "entire network becomes unresponsive simultaneously",
+      "switch activity lights flashing furiously in unison",
+      "broadcast storm brings down lan",
+      "stp loop",
+      "network loop",
+      "switches pegging 100 percent cpu",
+      "instant freeze when plugging patch cable"
+    ],
+    "likely_causes": [
+      "Two switch ports accidentally cross-connected creating a loop",
+      "Spanning Tree Protocol disabled on one or more managed switches",
+      "Bridge Protocol Data Unit BPDU filter misconfigured on access ports"
+    ],
+    "diagnostic_steps": [
+      "Look for high frequency flashing on all switch port LEDs simultaneously.",
+      "Disconnect newly connected cables one by one to see if network restores.",
+      "Review switch console for Spanning Tree topology change notifications."
+    ],
+    "fix_steps": [
+      "Immediately disconnect the redundant loop cable between switch ports.",
+      "Enable Spanning Tree Protocol RSTP or MSTP on all active switches.",
+      "Enable BPDU Guard and Loop Guard on all user facing access ports."
+    ],
+    "severity": "critical"
+  },
+  {
+    "id": "rogue-dhcp-server",
+    "name": "Rogue DHCP Server on LAN",
+    "category": "Addressing & Routing",
+    "symptoms": [
+      "computers getting weird IP addresses like 192.168.0.x instead of 10.0.x.x",
+      "sudden internet loss across several office computers",
+      "default gateway pointing to a personal router or printer",
+      "rogue dhcp",
+      "two dhcp servers",
+      "wrong ip range assigned"
+    ],
+    "likely_causes": [
+      "Someone plugged a home Wi-Fi router into an office wall jack using the LAN port",
+      "Virtual machine hypervisor running default NAT DHCP service on bridged network",
+      "Misconfigured secondary test server handing out leases"
+    ],
+    "diagnostic_steps": [
+      "Run ipconfig /all to inspect which DHCP Server IP provided the lease.",
+      "Trace the MAC address of the rogue DHCP IP using the switch MAC address table.",
+      "Check which switch port learned the offending MAC address."
+    ],
+    "fix_steps": [
+      "Locate and unplug the unauthorized router or service from the network.",
+      "Enable DHCP Snooping on all managed switches to block rogue offers.",
+      "Renew client IP configurations with ipconfig /renew."
+    ],
+    "severity": "critical"
+  },
+  {
+    "id": "captive-portal-intercept",
+    "name": "Captive Portal Redirection Failure",
+    "category": "Wireless",
+    "symptoms": [
+      "connected to hotel or airport wifi but no internet",
+      "browser displays certificate security warning instead of login page",
+      "captive portal login page does not load",
+      "hotel wifi login not showing",
+      "captive portal",
+      "splash screen missing"
+    ],
+    "likely_causes": [
+      "Browser attempting HTTPS connection before portal authentication",
+      "Custom DNS server like 1.1.1.1 configured preventing portal DNS hijacking",
+      "Strict DNS over HTTPS DoH enabled in browser bypassing captive portal"
+    ],
+    "diagnostic_steps": [
+      "Attempt navigating to an unencrypted HTTP website like http://neverssl.com.",
+      "Check if your DNS is set to automatic DHCP instead of a manual IP.",
+      "Disable third party VPN applications during the login handshake."
+    ],
+    "fix_steps": [
+      "Open your browser and navigate to http://neverssl.com or http://1.1.1.1.",
+      "Temporarily turn off VPN and private DNS settings until signed in.",
+      "Forget and reconnect to the Wi-Fi network to trigger the login popup."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "stale-dns-cache",
+    "name": "Stale or Poisoned Local DNS Cache",
+    "category": "DNS",
+    "symptoms": [
+      "website loads old IP address after migration",
+      "browser shows outdated version of site while phone loads new site",
+      "stale dns",
+      "cached ip wrong",
+      "dns flush needed",
+      "site migrated but still pointing to old server"
+    ],
+    "likely_causes": [
+      "Operating system cached old DNS record before TTL expired",
+      "Browser internal DNS cache retaining stale IP mapping",
+      "Local hosts file contains outdated manual IP overrides"
+    ],
+    "diagnostic_steps": [
+      "Run ipconfig /displaydns to search for the specific domain name.",
+      "Check your operating system hosts file for hardcoded entries.",
+      "Test domain resolution using nslookup with an external server like 8.8.8.8."
+    ],
+    "fix_steps": [
+      "Run ipconfig /flushdns in the command prompt to clear system cache.",
+      "Clear host cache in Chrome at chrome://net-internals/#dns.",
+      "Remove any manual entries in the hosts file and restart your browser."
+    ],
+    "severity": "low"
+  },
+  {
+    "id": "bufferbloat",
+    "name": "Bufferbloat Queue Latency Spike",
+    "category": "Performance",
+    "symptoms": [
+      "ping spikes to 500ms whenever someone downloads a game or uploads a video",
+      "rubberbanding during online gaming while stream is uploading",
+      "bufferbloat",
+      "latency spikes under load",
+      "slow responsive during upload",
+      "network freezes during upload"
+    ],
+    "likely_causes": [
+      "Router buffers oversized queues during heavy upload or download saturation",
+      "Lack of modern queue management like CAKE or FQ-CoDel on home router",
+      "Asymmetric broadband connection maxing out upload bandwidth"
+    ],
+    "diagnostic_steps": [
+      "Run a bufferbloat test at waveform.com while monitoring ping latency.",
+      "Run a continuous ping while starting a full-speed upload test.",
+      "Check router QoS settings to see if active queue management is enabled."
+    ],
+    "fix_steps": [
+      "Enable Smart Queue Management SQM like CAKE or FQ-CoDel on your router.",
+      "Cap upload bandwidth in router QoS to 90 percent of your ISP maximum speed.",
+      "Limit concurrent upload streams on file sharing or cloud backup applications."
+    ],
+    "severity": "medium"
+  },
+  {
+    "id": "isp-upstream-outage",
+    "name": "ISP Upstream Gateway Outage",
+    "category": "Physical & Data Link",
+    "symptoms": [
+      "router shows wan disconnected or optical los light red",
+      "can ping local router but no internet IP can be reached",
+      "dsl light blinking",
+      "modem offline",
+      "isp outage",
+      "upstream gateway down",
+      "fiber link down"
+    ],
+    "likely_causes": [
+      "Physical fiber or coaxial line cut upstream in neighborhood",
+      "ISP local distribution node maintenance or power failure",
+      "Modem lost synchronization with ISP headend equipment"
+    ],
+    "diagnostic_steps": [
+      "Look at the WAN or Internet status LED on your modem and router.",
+      "Log into router admin page to verify if WAN IP address is 0.0.0.0.",
+      "Check your mobile phone carrier data to see if ISP reports a regional outage."
+    ],
+    "fix_steps": [
+      "Power cycle your modem and router by unplugging power for 30 seconds.",
+      "Inspect the coaxial or fiber cable entering the modem for physical bends.",
+      "Call your Internet Service Provider to check for regional service interruptions."
+    ],
+    "severity": "critical"
+  }
+]
