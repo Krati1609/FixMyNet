@@ -25,11 +25,11 @@
 - **Workaround:** Moved the logic into a helper module and ran it as a normal test script.
 - **Suggestion:** MCP quick-start examples could use script files, or include a Windows (PowerShell) version of any shell commands.
 
-## Friction 4: Antigravity's new app has no code editor
-- **Task attempted:** Open and edit project files while building with Antigravity.
-- **Steps taken:** Installed Antigravity and opened a project.
-- **Expected:** A code editor with files and a terminal.
-- **Actual:** The new desktop app is an agent-only chat window. The editor is a separate "Antigravity IDE" download, which I only found after searching.
+## Friction 4: Direct public-DNS query times out on some networks
+- **Task attempted:** Add a live network check that tests DNS two ways: through the system resolver and with a direct query to a public DNS server (1.1.1.1), using Node's `dns` module.
+- **Steps taken:** Used `node:dns/promises` with a custom `Resolver` pointed at 1.1.1.1, with a 2-second timeout, and ran the check on my home network.
+- **Expected:** The same result every time on a working connection.
+- **Actual:** On my network the direct query sometimes timed out and showed a failed check while the system DNS and the website request worked. Another run passed.
 - **Severity:** Low
-- **Workaround:** Edited files in VS Code and used the agent for generation.
-- **Suggestion:** Show a first-launch hint explaining the difference between the app and the IDE, and link to the IDE download.
+- **Workaround:** Kept the check, show its reason on the result card, and only mark the overall result "degraded" if the system DNS also fails.
+- **Suggestion:** Document that direct DNS queries to public servers can be blocked or slow on some networks, and that the resolver's timeout and retry options need tuning for reliable checks.
